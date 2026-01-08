@@ -16,7 +16,7 @@ COPY requirements.txt \
      run_worker.sh \
      /opt/dci-provisioner
 COPY templates /opt/dci-provisioner/templates
-COPY configs/hooktftp.yml /etc/hooktftp.yml
+COPY configs/hooktftp.yml /opt/dci-provisioner/hooktftp.yml
 COPY configs/supervisord.d/dci-lab.ini \
      configs/supervisord.d/hooktftp.ini \
      configs/supervisord.d/rq_worker.ini \

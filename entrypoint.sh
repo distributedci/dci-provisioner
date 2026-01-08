@@ -29,6 +29,11 @@ for FILE in $DEFAULT_KICKSTART_TEMPLATES/*; do
 	fi
 done
 
+# Only copy default hooktftp.yml file if it's missing.
+if [ ! -e "$NETBOOT_IMAGES_DIR/hooktftp.yml" ]; then
+	cp /opt/dci-provisioner/hooktftp.yml $NETBOOT_IMAGES_DIR/hooktftp.yml
+fi
+
 # Only copy default netboot images if it's missing.
 for FILE in $DEFAULT_NETBOOT_IMAGES/*; do
 	NETBOOT_IMAGE=${FILE#$DEFAULT_NETBOOT_IMAGES/}
