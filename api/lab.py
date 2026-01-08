@@ -122,7 +122,7 @@ def netboot_grub2(hex_ip):
         if devicetree:
             devicetree = 'devicetree %s' % devicetree
         netboot_values.update({'ks_host': get_ks_url(hex_ip),
-                               'devicetree': devicetree,
+                               'devicetree': devicetree or '',
                                'kernel_options': kernel_options
                                })
         if 'clear_netboot' in flask.request.args:
