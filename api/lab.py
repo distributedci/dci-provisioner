@@ -8,6 +8,13 @@ import socket
 import string
 from utils import decode_values, extract_arg, ip_to_hex
 
+import logging
+
+from logging.config import fileConfig
+
+fileConfig('%s' % settings.LOGGING_CFG)
+
+logger = logging.getLogger(__name__)
 
 app = flask.Flask(__name__)
 r = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
@@ -25,6 +32,7 @@ def render_template(template_file, metadata):
             )
     template = jinja_env.get_template(template_file)
     rendered = template.render(**metadata)
+    logger.debug(f"Rendered Template: {template}\n{rendered}")
     return rendered
 
 def clear_netboot(values):

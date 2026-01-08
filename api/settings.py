@@ -3,6 +3,7 @@ import os
 # python-RQ and workers settings
 RQ_JOBS_TIMEOUT = os.getenv("JOBS_TIMEOUT", "10h")
 IMAGE_FETCH_TIMEOUT = os.getenv("IMAGE_FETCH_TIMEOUT", 120)
+LOGGING_CFG = os.getenv("LOGGING_CFG", "./logging.ini")
 
 # Redis settings
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")

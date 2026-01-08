@@ -7,7 +7,13 @@ import routine
 import socket
 from utils import decode_values
 from rq.job import Job
+import logging
 
+from logging.config import fileConfig
+
+fileConfig('%s' % settings.LOGGING_CFG)
+
+logger = logging.getLogger(__name__)
 
 app = flask.Flask(__name__)
 r = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
