@@ -35,14 +35,22 @@ def render_template(template_file, metadata):
     logger.debug(f"Rendered Template: {template}\n{rendered}")
     return rendered
 
-def clear_netboot(values):
-    r.expire("netboot:%s" % values["hex_ip"], 10)
-
 def get_ks_url(hex_ip):
     ks_host = "inst.ks=http://{0}:{1}/kickstarts/{2}".format(settings.LAB_HOST,
                                                              settings.LAB_PORT,
                                                              hex_ip)
     return ks_host
+
+def clear_netboot(netboot, hex_ip, method):
+    """
+    Hosts can either clear netboot when tftp request is made
+    or when the kickstart if pulled.
+    """
+    hex_ips = [ip_to_hex(ip.split(':')[0]) for ip in flask.request.access_route]
+    remote_host_is_calling = hex_ip in hex_ips
+    if netboot == method and remote_host_is_calling:
+        logger.info(f"{method} triggered clear_netboot for {hex_ip}")
+        r.expire("netboot:%s" % hex_ip, settings.NETBOOT_TIMEOUT)
 
 def render_kickstart(osmajor, kickstart_values):
     candidates = [
@@ -62,6 +70,9 @@ def render_kickstart(osmajor, kickstart_values):
 def kickstart(hex_ip):
     kickstart_values = json.loads(r.get("kickstart:%s" % hex_ip) or '{}')
     if kickstart_values:
+        clear_netboot(kickstart_values.get("clear_netboot"),
+                      hex_ip,
+                      "http")
         osmajor = kickstart_values.get("osmajor")
         # update with de-serialized versions
         kickstart_values.update({'root_pw': settings.ROOT_PW})
@@ -95,8 +106,9 @@ def netboot_pxe(hex_ip):
     if netboot_values:
         netboot_values.update({'ks_host': get_ks_url(hex_ip)})
         template = "netboot/pxe_boot.j2"
-        if 'clear_netboot' in flask.request.args:
-            clear_netboot(netboot_values)
+        clear_netboot(netboot_values.get("clear_netboot"),
+                      netboot_values.get("hex_ip"),
+                      "tftp")
     return render_template(template, netboot_values)
 
 @app.route("/netboots/<hex_ip>/petitboot", methods=["GET"])
@@ -105,8 +117,9 @@ def netboot_petitboot(hex_ip):
     netboot_values = decode_values(r.hgetall("netboot:%s" % hex_ip))
     if netboot_values:
         netboot_values.update({'ks_host': get_ks_url(hex_ip)})
-        if 'clear_netboot' in flask.request.args:
-            clear_netboot(netboot_values)
+        clear_netboot(netboot_values.get("clear_netboot"),
+                      netboot_values.get("hex_ip"),
+                      "tftp")
         return render_template(template, netboot_values)
     else:
         return "", 404
@@ -125,8 +138,9 @@ def netboot_grub2(hex_ip):
                                'devicetree': devicetree or '',
                                'kernel_options': kernel_options
                                })
-        if 'clear_netboot' in flask.request.args:
-            clear_netboot(netboot_values)
+        clear_netboot(netboot_values.get("clear_netboot"),
+                      netboot_values.get("hex_ip"),
+                      "tftp")
         template = "netboot/grub2_boot.j2"
     return render_template(template, netboot_values)
 

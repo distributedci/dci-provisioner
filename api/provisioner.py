@@ -120,6 +120,8 @@ def system_actions(fqdn):
 
         action_args = dict(system = k_v, action = values)
 
+        logger.debug(action_args)
+
         if action in routine.actions:
             job = routine.get_jobs_queue(k_v["lab"]).enqueue(
                     getattr(routine, action), kwargs=action_args

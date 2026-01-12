@@ -18,6 +18,7 @@ LAB_PORT = os.getenv("LAB_PORT", 8000)
 TFTP_ROOT = os.getenv("TFTP_ROOT", "/opt/tftpboot")
 TEMPLATE_DIR = os.getenv("TEMPLATE_DIR", "/opt/templates")
 POWER_ATTEMPTS = os.getenv("POWER_ATTEMPTS", 5)
+NETBOOT_TIMEOUT = os.getenv("NETBOOT_TIMEOUT", 10)
 
 # This is set to dci-provisioner but you will never be able to login
 # unless you change the default kickstart template, since we disable password logins for root

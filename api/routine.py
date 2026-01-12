@@ -146,11 +146,17 @@ def provision(system, action):
     logger.debug('Fetching file %s for %s', action["initrd_url"], initrd_path)
     fetch_file(action["initrd_url"], initrd_path)
 
+    # netboot_clear_trigger is ether tftp or http.
+    # tftp means it will clear the netboot settings when the
+    # tftpboot config entry is pulled (pxelinux.cfg, grub.cfg, etc..)
+    # http means it will be cleared when the kickstart is pulled.
+    netboot_clear_trigger = action.get("netboot_clear_trigger", "tftp")
     # Configure tftp for host
     netboot_values = dict(hex_ip = action["hex_ip"],
                           image_path = image_rel_path,
                           kernel_path = kernel_rel_path,
                           initrd_path = initrd_rel_path,
+                          clear_netboot = netboot_clear_trigger,
                           kernel_options = action.get("kernel_options", ''))
     r.hset("netboot:%s" % action["hex_ip"], mapping=netboot_values)
     r.expire("netboot:%s" % action["hex_ip"], 3600)
@@ -160,6 +166,7 @@ def provision(system, action):
     kickstart_values = json.dumps(dict(hex_ip = action["hex_ip"],
                                        fqdn = system.get("fqdn", ""),
                                        arch = system.get("arch", ""),
+                                       clear_netboot = netboot_clear_trigger,
                                        **ks_meta))
     r.set("kickstart:%s" % action["hex_ip"], kickstart_values)
 
