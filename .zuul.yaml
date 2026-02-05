@@ -11,10 +11,6 @@
             vars: *common_vars
             secrets:
               - quay_registry_secrets
-        - dci-build-and-push-container-snapshot-job:
-            vars: *common_vars
-            secrets:
-              - quay_registry_secrets
     gate:
       jobs:
         - dci-build-and-push-container-job:
