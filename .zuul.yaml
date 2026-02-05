@@ -1,28 +1,42 @@
 - project:
     templates:
       - dci-build-and-push-container-template
-    vars: &common_vars
-      registry: quay.io
-      tag: distributedci/dci-provisioner
-      dockerfile_path: Containerfiles/Containerfile-provisioner
-
-    # check pipeline (PR)
+    
+    # check pipelin (PR)
+    # run the build job, but hijack it to run the push playbook too.
     check:
       jobs:
         - dci-build-container-job:
             vars:
               version: "git{{ zuul['commit_id'][:7] }}"
               quay_expiration: 2w
+              registry: quay.io
+              tag: distributedci/dci-provisioner
+              dockerfile_path: Containerfiles/Containerfile-provisioner
+            
+            # point to the central config project for playbooks
             run:
-              - playbooks/containers/build.yaml
-              - playbooks/containers/push.yaml
+              - name: playbooks/containers/build.yaml
+                project: gitlab.com/softwarefactory-project/centosinfra-prod/dci-config
+              - name: playbooks/containers/push.yaml
+                project: gitlab.com/softwarefactory-project/centosinfra-prod/dci-config
 
     # gate pipeline (merge)
+    # run both snapshot and production builds.
     gate:
       jobs:
+        # snapshot job
         - dci-build-and-push-container-snapshot-job:
-            vars: *common_vars
-            secrets:
-              - quay_registry_secrets
+            vars:
+              # explicitly listing variables to fix "Dockerfile not found"
+              registry: quay.io
+              tag: distributedci/dci-provisioner
+              dockerfile_path: Containerfiles/Containerfile-provisioner
+
+        # production job
         - dci-build-and-push-container-job:
-            vars: *common_vars
+            vars:
+              # explicitly listing variables here as well
+              registry: quay.io
+              tag: distributedci/dci-provisioner
+              dockerfile_path: Containerfiles/Containerfile-provisioner
