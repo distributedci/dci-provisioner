@@ -1,7 +1,17 @@
 - project:
     templates:
       - dci-build-and-push-container-template
-    vars:
-      registry: quay.io
-      tag: distributedci/dci-provisioner
-      dockerfile_path: Containerfiles/Containerfile-provisioner
+    check:
+      jobs:
+        - dci-build-and-push-container:
+            vars:
+              registry: quay.io
+              tag: distributedci/dci-provisioner
+              dockerfile_path: Containerfiles/Containerfile-provisioner
+    gate:
+      jobs:
+        - dci-build-and-push-container
+            vars:
+              registry: quay.io
+              tag: distributedci/dci-provisioner
+              dockerfile_path: Containerfiles/Containerfile-provisioner
