@@ -16,8 +16,6 @@
             run:
               - playbooks/containers/build.yaml
               - playbooks/containers/push.yaml
-            secrets:
-              - quay_registry_secrets
 
     # gate pipeline (merge)
     gate:
@@ -28,5 +26,3 @@
               - quay_registry_secrets
         - dci-build-and-push-container-job:
             vars: *common_vars
-            secrets:
-              - quay_registry_secrets
