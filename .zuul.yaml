@@ -3,3 +3,4 @@
       - dci-build-and-push-container-template
     vars:
       registry: quay.io
+      tag: distributedci/dci-provisioner
