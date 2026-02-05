@@ -1,30 +1,22 @@
-# We define a specific job for PRs that builds AND pushes.
-# We do this here because the 'project' section doesn't allow 
-# referencing external playbooks directly.
+# ----------------------------------------------------------------------
+# 1. Custom Job Definition
+# We create a child of the snapshot job to inherit its playbooks.
+# We override 'provides' to empty so Zuul lets it run in PRs.
 # ----------------------------------------------------------------------
 - job:
     name: dci-provisioner-pr-push
-    parent: dci-build-container-job  # Inherit from the "Safe" base
-    
-    # We explicitly point to the playbooks in the DCI config repo
-    run:
-      - name: playbooks/containers/build.yaml
-        project: gitlab.com/softwarefactory-project/centosinfra-prod/dci-config
-      - name: playbooks/containers/push.yaml
-        project: gitlab.com/softwarefactory-project/centosinfra-prod/dci-config
-    
-    # Variables specific to this PR job (GitSHA versioning)
+    parent: dci-build-and-push-container-snapshot-job
+    provides: []
     vars:
       version: "git{{ zuul['commit_id'][:7] }}"
       quay_expiration: 2w
+      # Explicitly define path variables for the inherited playbooks
       registry: quay.io
       tag: distributedci/dci-provisioner
       dockerfile_path: Containerfiles/Containerfile-provisioner
 
-
 # ----------------------------------------------------------------------
 # 2. Project Configuration
-# Use custom job
 # ----------------------------------------------------------------------
 - project:
     templates:
@@ -44,10 +36,7 @@
     # GATE Pipeline (Merge to Main)
     gate:
       jobs:
-        # Snapshot (GitSHA)
         - dci-build-and-push-container-snapshot-job:
             vars: *common_vars
-        
-        # Production (Latest/Nobkr)
         - dci-build-and-push-container-job:
             vars: *common_vars
