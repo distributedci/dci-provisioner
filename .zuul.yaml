@@ -1,42 +1,53 @@
+# We define a specific job for PRs that builds AND pushes.
+# We do this here because the 'project' section doesn't allow 
+# referencing external playbooks directly.
+# ----------------------------------------------------------------------
+- job:
+    name: dci-provisioner-pr-push
+    parent: dci-build-container-job  # Inherit from the "Safe" base
+    
+    # We explicitly point to the playbooks in the DCI config repo
+    run:
+      - name: playbooks/containers/build.yaml
+        project: gitlab.com/softwarefactory-project/centosinfra-prod/dci-config
+      - name: playbooks/containers/push.yaml
+        project: gitlab.com/softwarefactory-project/centosinfra-prod/dci-config
+    
+    # Variables specific to this PR job (GitSHA versioning)
+    vars:
+      version: "git{{ zuul['commit_id'][:7] }}"
+      quay_expiration: 2w
+      registry: quay.io
+      tag: distributedci/dci-provisioner
+      dockerfile_path: Containerfiles/Containerfile-provisioner
+
+
+# ----------------------------------------------------------------------
+# 2. Project Configuration
+# Use custom job
+# ----------------------------------------------------------------------
 - project:
     templates:
       - dci-build-and-push-container-template
     
-    # check pipelin (PR)
-    # run the build job, but hijack it to run the push playbook too.
+    # Global variables for the Gate jobs
+    vars: &common_vars
+      registry: quay.io
+      tag: distributedci/dci-provisioner
+      dockerfile_path: Containerfiles/Containerfile-provisioner
+
+    # CHECK Pipeline (PR Submission)
     check:
       jobs:
-        - dci-build-container-job:
-            vars:
-              version: "git{{ zuul['commit_id'][:7] }}"
-              quay_expiration: 2w
-              registry: quay.io
-              tag: distributedci/dci-provisioner
-              dockerfile_path: Containerfiles/Containerfile-provisioner
-            
-            # point to the central config project for playbooks
-            run:
-              - name: playbooks/containers/build.yaml
-                project: gitlab.com/softwarefactory-project/centosinfra-prod/dci-config
-              - name: playbooks/containers/push.yaml
-                project: gitlab.com/softwarefactory-project/centosinfra-prod/dci-config
+        - dci-provisioner-pr-push
 
-    # gate pipeline (merge)
-    # run both snapshot and production builds.
+    # GATE Pipeline (Merge to Main)
     gate:
       jobs:
-        # snapshot job
+        # Snapshot (GitSHA)
         - dci-build-and-push-container-snapshot-job:
-            vars:
-              # explicitly listing variables to fix "Dockerfile not found"
-              registry: quay.io
-              tag: distributedci/dci-provisioner
-              dockerfile_path: Containerfiles/Containerfile-provisioner
-
-        # production job
+            vars: *common_vars
+        
+        # Production (Latest/Nobkr)
         - dci-build-and-push-container-job:
-            vars:
-              # explicitly listing variables here as well
-              registry: quay.io
-              tag: distributedci/dci-provisioner
-              dockerfile_path: Containerfiles/Containerfile-provisioner
+            vars: *common_vars
