@@ -5,19 +5,28 @@
       registry: quay.io
       tag: distributedci/dci-provisioner
       dockerfile_path: Containerfiles/Containerfile-provisioner
+
+    # check pipeline (PR)
     check:
       jobs:
-        - dci-build-and-push-container-job:
-            vars: *common_vars
+        - dci-build-container-job:
+            vars:
+              version: "git{{ zuul['commit_id'][:7] }}"
+              quay_expiration: 2w
+            run:
+              - playbooks/containers/build.yaml
+              - playbooks/containers/push.yaml
             secrets:
               - quay_registry_secrets
+
+    # gate pipeline (merge)
     gate:
       jobs:
-        - dci-build-and-push-container-job:
+        - dci-build-and-push-container-snapshot-job:
             vars: *common_vars
             secrets:
               - quay_registry_secrets
-        - dci-build-and-push-container-snapshot-job:
+        - dci-build-and-push-container-job:
             vars: *common_vars
             secrets:
               - quay_registry_secrets
