@@ -1,17 +1,35 @@
 - project:
     templates:
       - dci-build-and-push-container-template
+    vars: &common_vars
+      registry: quay.io
+      tag: distributedci/dci-provisioner
+      dockerfile_path: Containerfiles/Containerfile-provisioner
     check:
       jobs:
         - dci-build-and-push-container-job:
-            vars:
-              registry: quay.io
-              tag: distributedci/dci-provisioner
-              dockerfile_path: Containerfiles/Containerfile-provisioner
+            vars: *common_vars
+            secrets:
+              - name: quay_registry_secrets
+                secret: quay_registry_secrets
+                pass-to-parent: true
+        - dci-build-and-push-container-snapshot-job:
+            vars: *common_vars
+            secrets:
+              - name: quay_registry_secrets
+                secret: quay_registry_secrets
+                pass-to-parent: true            
     gate:
       jobs:
         - dci-build-and-push-container-job:
-            vars:
-              registry: quay.io
-              tag: distributedci/dci-provisioner
-              dockerfile_path: Containerfiles/Containerfile-provisioner
+            vars: *common_vars
+            secrets:
+              - name: quay_registry_secrets
+                secret: quay_registry_secrets
+                pass-to-parent: true
+        - dci-build-and-push-container-snapshot-job:
+            vars: *common_vars
+            secrets:
+              - name: quay_registry_secrets
+                secret: quay_registry_secrets
+                pass-to-parent: true
