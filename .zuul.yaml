@@ -10,7 +10,7 @@
               dockerfile_path: Containerfiles/Containerfile-provisioner
     gate:
       jobs:
-        - dci-build-and-push-container
+        - dci-build-and-push-container:
             vars:
               registry: quay.io
               tag: distributedci/dci-provisioner
