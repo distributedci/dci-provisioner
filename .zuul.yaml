@@ -4,3 +4,4 @@
     vars:
       registry: quay.io
       tag: distributedci/dci-provisioner
+      dockerfile_path: Containerfiles/Containerfile-provisioner
