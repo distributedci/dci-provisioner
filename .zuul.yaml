@@ -10,26 +10,18 @@
         - dci-build-and-push-container-job:
             vars: *common_vars
             secrets:
-              - name: quay_registry_secrets
-                secret: quay_registry_secrets
-                pass-to-parent: true
+              - quay_registry_secrets
         - dci-build-and-push-container-snapshot-job:
             vars: *common_vars
             secrets:
-              - name: quay_registry_secrets
-                secret: quay_registry_secrets
-                pass-to-parent: true            
+              - quay_registry_secrets
     gate:
       jobs:
         - dci-build-and-push-container-job:
             vars: *common_vars
             secrets:
-              - name: quay_registry_secrets
-                secret: quay_registry_secrets
-                pass-to-parent: true
+              - quay_registry_secrets
         - dci-build-and-push-container-snapshot-job:
             vars: *common_vars
             secrets:
-              - name: quay_registry_secrets
-                secret: quay_registry_secrets
-                pass-to-parent: true
+              - quay_registry_secrets
