@@ -1,42 +1,38 @@
-# ----------------------------------------------------------------------
-# 1. Custom Job Definition
-# We create a child of the snapshot job to inherit its playbooks.
-# We override 'provides' to empty so Zuul lets it run in PRs.
-# ----------------------------------------------------------------------
 - job:
     name: dci-provisioner-pr-push
     parent: dci-build-and-push-container-snapshot-job
-    provides: []
+    provides: []  # avoids breaking zuul rules
     vars:
-      version: "git{{ zuul['commit_id'][:7] }}"
-      quay_expiration: 2w
-      # Explicitly define path variables for the inherited playbooks
       registry: quay.io
       tag: distributedci/dci-provisioner
       dockerfile_path: Containerfiles/Containerfile-provisioner
 
-# ----------------------------------------------------------------------
-# 2. Project Configuration
-# ----------------------------------------------------------------------
 - project:
     templates:
       - dci-build-and-push-container-template
     
-    # Global variables for the Gate jobs
     vars: &common_vars
       registry: quay.io
       tag: distributedci/dci-provisioner
       dockerfile_path: Containerfiles/Containerfile-provisioner
 
-    # CHECK Pipeline (PR Submission)
+    # PR open/update -> push gitSHA
+    # inherits git<SHA> version and 2w expiration.
     check:
       jobs:
         - dci-provisioner-pr-push
 
-    # GATE Pipeline (Merge to Main)
+    # gate: merge queue -> build only
     gate:
       jobs:
-        - dci-build-and-push-container-snapshot-job:
+        - dci-build-container-job:
             vars: *common_vars
+
+    # post -> push to production with prod version and no exipiration
+    post:
+      jobs:
         - dci-build-and-push-container-job:
-            vars: *common_vars
+            vars:
+              tag: distributedci/dci-provisioner
+              version: nobkr-8
+              dockerfile_path: Containerfiles/Containerfile-provisioner
