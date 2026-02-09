@@ -1,38 +1,7 @@
-- job:
-    name: dci-provisioner-pr-push
-    parent: dci-build-and-push-container-snapshot-job
-    provides: []  # avoids breaking zuul rules
+- project:
+    name: distributedci/dci-provisioner
     vars:
       registry: quay.io
       tag: distributedci/dci-provisioner
-      dockerfile_path: Containerfiles/Containerfile-provisioner
-
-- project:
     templates:
       - dci-build-and-push-container-template
-    
-    vars: &common_vars
-      registry: quay.io
-      tag: distributedci/dci-provisioner
-      dockerfile_path: Containerfiles/Containerfile-provisioner
-
-    # PR open/update -> push gitSHA
-    # inherits git<SHA> version and 2w expiration.
-    check:
-      jobs:
-        - dci-provisioner-pr-push
-
-    # gate: merge queue -> build only
-    gate:
-      jobs:
-        - dci-build-container-job:
-            vars: *common_vars
-
-    # post -> push to production with prod version and no exipiration
-    post:
-      jobs:
-        - dci-build-and-push-container-job:
-            vars:
-              tag: distributedci/dci-provisioner
-              version: nobkr-8
-              dockerfile_path: Containerfiles/Containerfile-provisioner
