@@ -39,4 +39,3 @@ When a provisioning request is triggered (via the API):
 * **templates/**: Kickstart and configuration templates used during provisioning.
 * **run_worker.sh**: Script to launch the RQ worker process.
 * **Makefile**: Automation for building and deploying the project.
-#Test commit

@@ -2,8 +2,7 @@ FROM quay.io/fedora/s2i-core:latest
 
 ENV LANG en_US.UTF-8
 
-RUN echo "zchunk=False" >> /etc/dnf/dnf.conf && \
-    dnf -y upgrade && \
+RUN dnf -y upgrade && \
     rpm --setcaps shadow-utils 2>/dev/null && \
     dnf -y install python3 python3-pip supervisor && \
     dnf clean all
