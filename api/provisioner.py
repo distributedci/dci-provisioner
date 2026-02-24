@@ -131,7 +131,7 @@ def system_actions(fqdn):
                         {
                             "status": "OK",
                             "message": f"Action for {fqdn} has been started.",
-                            "job": job.get_id(),
+                            "job": job.id,
                         }
                     ),
                     status=201,
