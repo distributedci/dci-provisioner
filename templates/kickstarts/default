@@ -84,7 +84,7 @@ if efibootmgr &>/dev/null ; then
     efibootmgr -v > /root/efibootmgr-before.txt
 
     # Get boot entry numbers for IPv4 PXE (not IPv6) and disk boot
-    PXE_IPV4=$(efibootmgr | grep -Ei 'PXE|v4' | grep -vi 'v6' | awk '{print $1}' | sed 's/Boot//;s/\*//' | head -n 1)
+    PXE_IPV4=$(efibootmgr | grep '* ' | grep -Ei 'PXE|v4' | grep -vi 'v6' | awk '{print $1}' | sed 's/Boot//;s/\*//' | head -n 1)
     DISK_BOOT=$(efibootmgr | grep -Ei 'Red Hat|Linux|HD|Hard Drive|Boot Manager' | grep -vi 'PXE' | awk '{print $1}' | sed 's/Boot//;s/\*//' | head -n 1)
 
     # Get the current boot order as a list
