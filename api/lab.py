@@ -37,10 +37,9 @@ def render_template(template_file, metadata):
     return rendered
 
 def get_ks_url(hex_ip):
-    # Read at request time so we use the process env (set by container/supervisord)
-    lab_host = os.getenv("LAB_HOST", settings.LAB_HOST)
-    lab_port = os.getenv("LAB_PORT", str(settings.LAB_PORT))
-    ks_host = "inst.ks=http://{0}:{1}/kickstarts/{2}".format(lab_host, lab_port, hex_ip)
+    ks_host = "inst.ks=http://{0}:{1}/kickstarts/{2}".format(settings.LAB_HOST,
+                                                             settings.LAB_PORT,
+                                                             hex_ip)
     logger.info("get_ks_url(hex_ip=%s) -> LAB_HOST=%s LAB_PORT=%s -> %s",
                 hex_ip, lab_host, lab_port, ks_host)
     return ks_host
