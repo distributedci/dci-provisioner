@@ -7,7 +7,6 @@ import settings
 import rq
 import requests
 import time
-from utils import makedirs_ignore
 import json
 import random
 
@@ -46,7 +45,7 @@ def fetch_file(url, dest):
     # NOTE the stream=True parameter
     req = requests.get(url, stream=True)
     with open(dest, 'wb') as file:
-        for chunk in req.iter_content(chunk_size=1024): 
+        for chunk in req.iter_content(chunk_size=1024):
             if chunk: # filter out keep-alive new chunks
                 file.write(chunk)
                 #file.flush() commented by recommendation from J.F.Sebastian
@@ -123,7 +122,7 @@ def provision(system, action):
     # Fetch image installer for host
     image_rel_path = os.path.join(action["hex_ip"], 'image')
     image_path = os.path.join(settings.TFTP_ROOT, image_rel_path)
-    makedirs_ignore(os.path.dirname(image_path), mode=0o755)
+    os.makedirs(os.path.dirname(image_path), mode=0o755, exist_ok=True)
     if action.get("image_url") and action.get('use_boot_image'):
         logger.debug('Fetching file %s for %s', action["image_url"], image_path)
         fetch_file(action["image_url"], image_path)
@@ -135,14 +134,14 @@ def provision(system, action):
     # Fetch kernel for host
     kernel_rel_path = os.path.join(action["hex_ip"], 'kernel')
     kernel_path = os.path.join(settings.TFTP_ROOT, kernel_rel_path)
-    makedirs_ignore(os.path.dirname(kernel_path), mode=0o755)
+    os.makedirs(os.path.dirname(kernel_path), mode=0o755, exist_ok=True)
     logger.debug('Fetching file %s for %s', action["kernel_url"], kernel_path)
     fetch_file(action["kernel_url"], kernel_path)
 
     # Fetch ramdisk for host
     initrd_rel_path = os.path.join(action["hex_ip"], 'initrd')
     initrd_path = os.path.join(settings.TFTP_ROOT, initrd_rel_path)
-    makedirs_ignore(os.path.dirname(initrd_path), mode=0o755)
+    os.makedirs(os.path.dirname(initrd_path), mode=0o755, exist_ok=True)
     logger.debug('Fetching file %s for %s', action["initrd_url"], initrd_path)
     fetch_file(action["initrd_url"], initrd_path)
 
