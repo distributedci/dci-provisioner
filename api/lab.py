@@ -92,8 +92,13 @@ def kickstart(hex_ip):
 
 @app.route("/netboots/<hex_ip>/image", methods=["GET"])
 def netboot_image(hex_ip):
-    image = os.path.join(hex_ip, 'image')
-    return flask.send_from_directory(settings.TFTP_ROOT, image)
+    image = ""
+    netboot_values = decode_values(r.hgetall("netboot:%s" % hex_ip))
+    if netboot_values:
+        image = netboot_values.get('image_path')
+        return flask.send_from_directory(settings.TFTP_ROOT, image)
+    else:
+        return image, 404
 
 @app.route("/netboots/<hex_ip>/pxe", methods=["GET"])
 def netboot_pxe(hex_ip):
