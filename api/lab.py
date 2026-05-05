@@ -145,6 +145,18 @@ def netboot_grub2(hex_ip):
         template = "netboot/grub2_boot.j2"
     return render_template(template, netboot_values)
 
+@app.route("/grub-modules/powerpc-ieee1275/<filename>", methods=["GET"])
+def grub_modules(filename):
+    """Serve grub module files for RHEL-8 PPC based on requesting client's hex_ip"""
+    client_hex_ip = ip_to_hex(flask.request.remote_addr)
+    module_path = os.path.join(client_hex_ip, 'powerpc-ieee1275', filename)
+    logger.debug(f"Serving grub module: {module_path} for client {client_hex_ip}")
+    try:
+        return flask.send_from_directory(settings.TFTP_ROOT, module_path)
+    except FileNotFoundError:
+        logger.warning(f"Grub module not found: {module_path} for client {client_hex_ip}")
+        return "", 404
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=settings.LAB_PORT, debug=True)
 
