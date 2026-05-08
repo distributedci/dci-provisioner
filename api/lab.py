@@ -148,14 +148,21 @@ def netboot_grub2(hex_ip):
 @app.route("/grub-modules/powerpc-ieee1275/<filename>", methods=["GET"])
 def grub_modules(filename):
     """Serve grub module files for RHEL-8 PPC based on requesting client's hex_ip"""
-    client_hex_ip = ip_to_hex(flask.request.remote_addr)
-    module_path = os.path.join(client_hex_ip, 'powerpc-ieee1275', filename)
-    logger.debug(f"Serving grub module: {module_path} for client {client_hex_ip}")
-    try:
-        return flask.send_from_directory(settings.TFTP_ROOT, module_path)
-    except FileNotFoundError:
-        logger.warning(f"Grub module not found: {module_path} for client {client_hex_ip}")
-        return "", 404
+    # Get all IPs from X-Forwarded-For chain (TFTP client IP will be in here)
+    hex_ips = [ip_to_hex(ip.split(':')[0]) for ip in flask.request.access_route]
+
+    # Check each hex_ip for a matching directory
+    for client_hex_ip in hex_ips:
+        module_path = os.path.join(client_hex_ip, 'powerpc-ieee1275', filename)
+        full_path = os.path.join(settings.TFTP_ROOT, module_path)
+
+        if os.path.exists(full_path):
+            logger.debug(f"Serving grub module: {module_path} for client {client_hex_ip}")
+            return flask.send_from_directory(settings.TFTP_ROOT, module_path)
+
+    # No matching directory found
+    logger.warning(f"Grub module {filename} not found for any client in {hex_ips}")
+    return "", 404
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=settings.LAB_PORT, debug=True)
