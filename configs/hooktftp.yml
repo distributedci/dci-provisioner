@@ -18,7 +18,7 @@ hooks:
     template: http://localhost:8008/netboots/$1/petitboot
 
   - type: http
-    regexp: boot/grub/powerpc-ieee1275/(.*)
+    regexp: /?boot/grub/powerpc-ieee1275/(.*)
     template: http://localhost:8008/grub-modules/powerpc-ieee1275/$1
 
   - type: file
