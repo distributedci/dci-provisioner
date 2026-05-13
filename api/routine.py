@@ -46,7 +46,7 @@ def fetch_file(url, dest):
     # NOTE the stream=True parameter
     req = requests.get(url, stream=True)
     with open(dest, 'wb') as file:
-        for chunk in req.iter_content(chunk_size=1024): 
+        for chunk in req.iter_content(chunk_size=1024):
             if chunk: # filter out keep-alive new chunks
                 file.write(chunk)
                 #file.flush() commented by recommendation from J.F.Sebastian
@@ -145,6 +145,27 @@ def provision(system, action):
     makedirs_ignore(os.path.dirname(initrd_path), mode=0o755)
     logger.debug('Fetching file %s for %s', action["initrd_url"], initrd_path)
     fetch_file(action["initrd_url"], initrd_path)
+
+    # Fetch grub modules for RHEL-8 PPC hosts
+    if action.get("grub_modules_url"):
+        grub_modules_dir = os.path.join(settings.TFTP_ROOT, action["hex_ip"], 'powerpc-ieee1275')
+        # Remove old modules if they exist (fresh download each provision)
+        if os.path.exists(grub_modules_dir):
+            shutil.rmtree(grub_modules_dir)
+        makedirs_ignore(grub_modules_dir, mode=0o755)
+        logger.info('Downloading grub modules from %s to %s', action["grub_modules_url"], grub_modules_dir)
+
+        # Use wget for recursive directory download of individual files
+        subprocess.run([
+            'wget',
+            '-r',
+            '-np',
+            '-nH',
+            '--cut-dirs=100',
+            '-P', grub_modules_dir,
+            '-q',
+            action["grub_modules_url"]
+        ], check=True)
 
     # netboot_clear_trigger is ether tftp or http.
     # tftp means it will clear the netboot settings when the

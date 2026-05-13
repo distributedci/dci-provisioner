@@ -17,6 +17,10 @@ hooks:
     regexp: bootloader/([0-9A-Fa-f]{8})/petitboot.cfg
     template: http://localhost:8008/netboots/$1/petitboot
 
+  - type: http
+    regexp: /?boot/grub/powerpc-ieee1275/(.*)
+    template: http://localhost:8008/grub-modules/powerpc-ieee1275/$1
+
   - type: file
     regexp: /([0-9A-Fa-f]{8})/((kernel|initrd))$
     template: /opt/tftpboot/$1/$2
