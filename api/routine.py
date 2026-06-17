@@ -146,6 +146,10 @@ def provision(system, action):
     logger.debug('Fetching file %s for %s', action["initrd_url"], initrd_path)
     fetch_file(action["initrd_url"], initrd_path)
 
+    # Manage grub modules symlink at /boot/grub/powerpc-ieee1275
+    # This handles grub's hardcoded prefix path for module loading
+    grub_expected_dir = os.path.join(settings.TFTP_ROOT, 'boot', 'grub', 'powerpc-ieee1275')
+
     # Fetch grub modules for RHEL-8 PPC hosts
     if action.get("grub_modules_url"):
         grub_modules_dir = os.path.join(settings.TFTP_ROOT, action["hex_ip"], 'powerpc-ieee1275')
@@ -166,6 +170,23 @@ def provision(system, action):
             '-q',
             action["grub_modules_url"]
         ], check=True)
+
+        # Create/update symlink from grub's expected path to downloaded modules
+        makedirs_ignore(os.path.dirname(grub_expected_dir), mode=0o755)
+        if os.path.islink(grub_expected_dir):
+            os.unlink(grub_expected_dir)
+        elif os.path.exists(grub_expected_dir):
+            shutil.rmtree(grub_expected_dir)
+        os.symlink(grub_modules_dir, grub_expected_dir)
+        logger.info('Created symlink from %s to %s', grub_expected_dir, grub_modules_dir)
+    else:
+        # Remove symlink if it exists (RHEL-9/10 don't need modules)
+        if os.path.islink(grub_expected_dir):
+            os.unlink(grub_expected_dir)
+            logger.info('Removed grub modules symlink at %s (not needed for this version)', grub_expected_dir)
+        elif os.path.exists(grub_expected_dir):
+            shutil.rmtree(grub_expected_dir)
+            logger.info('Removed grub modules directory at %s (not needed for this version)', grub_expected_dir)
 
     # netboot_clear_trigger is ether tftp or http.
     # tftp means it will clear the netboot settings when the
