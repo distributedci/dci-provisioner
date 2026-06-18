@@ -160,12 +160,15 @@ def provision(system, action):
         logger.info('Downloading grub modules from %s to %s', action["grub_modules_url"], grub_modules_dir)
 
         # Use wget for recursive directory download of individual files
+        # Reject index.html and other non-module files from directory listings
         subprocess.run([
             'wget',
             '-r',
             '-np',
             '-nH',
             '--cut-dirs=100',
+            '-R', 'index.html*',
+            '-A', '*.mod,*.lst',
             '-P', grub_modules_dir,
             '-q',
             action["grub_modules_url"]
@@ -187,6 +190,12 @@ def provision(system, action):
         elif os.path.exists(grub_expected_dir):
             shutil.rmtree(grub_expected_dir)
             logger.info('Removed grub modules directory at %s (not needed for this version)', grub_expected_dir)
+
+        # Also remove stale modules from hex_ip directory (from previous RHEL-8 provision)
+        grub_modules_dir = os.path.join(settings.TFTP_ROOT, action["hex_ip"], 'powerpc-ieee1275')
+        if os.path.exists(grub_modules_dir):
+            shutil.rmtree(grub_modules_dir)
+            logger.info('Removed stale grub modules at %s (not needed for this version)', grub_modules_dir)
 
     # netboot_clear_trigger is ether tftp or http.
     # tftp means it will clear the netboot settings when the
