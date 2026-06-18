@@ -182,20 +182,6 @@ def provision(system, action):
             shutil.rmtree(grub_expected_dir)
         os.symlink(grub_modules_dir, grub_expected_dir)
         logger.info('Created symlink from %s to %s', grub_expected_dir, grub_modules_dir)
-    else:
-        # Remove symlink if it exists (RHEL-9/10 don't need modules)
-        if os.path.islink(grub_expected_dir):
-            os.unlink(grub_expected_dir)
-            logger.info('Removed grub modules symlink at %s (not needed for this version)', grub_expected_dir)
-        elif os.path.exists(grub_expected_dir):
-            shutil.rmtree(grub_expected_dir)
-            logger.info('Removed grub modules directory at %s (not needed for this version)', grub_expected_dir)
-
-        # Also remove stale modules from hex_ip directory (from previous RHEL-8 provision)
-        grub_modules_dir = os.path.join(settings.TFTP_ROOT, action["hex_ip"], 'powerpc-ieee1275')
-        if os.path.exists(grub_modules_dir):
-            shutil.rmtree(grub_modules_dir)
-            logger.info('Removed stale grub modules at %s (not needed for this version)', grub_modules_dir)
 
     # netboot_clear_trigger is ether tftp or http.
     # tftp means it will clear the netboot settings when the
