@@ -52,7 +52,28 @@ def fetch_file(url, dest):
                 #file.flush() commented by recommendation from J.F.Sebastian
 
 def find_power_script(power_type):
+    # Validate power_type to prevent path traversal attacks
+    # Only allow alphanumeric characters, hyphens, and underscores
+    if not power_type or not isinstance(power_type, str):
+        raise ValueError('Invalid power type: must be a non-empty string')
+
+    # Check for path traversal attempts
+    if '/' in power_type or '\\' in power_type or '..' in power_type:
+        raise ValueError('Invalid power type %r: path traversal detected' % power_type)
+
+    # Additional validation: only allow safe characters
+    import re
+    if not re.match(r'^[a-zA-Z0-9_-]+$', power_type):
+        raise ValueError('Invalid power type %r: must contain only alphanumeric characters, hyphens, and underscores' % power_type)
+
     power_path = '/etc/power-scripts/%s' % power_type
+
+    # Verify the resolved path is within the expected directory
+    real_power_path = os.path.realpath(power_path)
+    real_scripts_dir = os.path.realpath('/etc/power-scripts')
+    if not real_power_path.startswith(real_scripts_dir + os.sep):
+        raise ValueError('Invalid power type %r: resolved path outside power-scripts directory' % power_type)
+
     if os.path.exists(power_path) and os.access(power_path, os.X_OK):
         return power_path
     raise ValueError('Invalid power type %r' % power_type)
