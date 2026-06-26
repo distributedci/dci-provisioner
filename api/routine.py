@@ -10,6 +10,7 @@ import time
 from utils import makedirs_ignore
 import json
 import random
+import re
 
 import logging
 
@@ -24,6 +25,7 @@ r = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
 #Replace with a decorator for which methods can be queued...
 actions = ["provision"]
 
+POWER_SCRIPT_BASE = '/etc/power-scripts'
 
 # Validate against actual LABS
 def get_jobs_queue(name: str) -> rq.Queue:
@@ -52,26 +54,17 @@ def fetch_file(url, dest):
                 #file.flush() commented by recommendation from J.F.Sebastian
 
 def find_power_script(power_type):
-    # Validate power_type to prevent path traversal attacks
-    # Only allow alphanumeric characters, hyphens, and underscores
-    if not power_type or not isinstance(power_type, str):
-        raise ValueError('Invalid power type: must be a non-empty string')
+    if not isinstance(power_type, str):
+        raise ValueError('Invalid power type: must be a string')
 
-    # Check for path traversal attempts
-    if '/' in power_type or '\\' in power_type or '..' in power_type:
-        raise ValueError('Invalid power type %r: path traversal detected' % power_type)
-
-    # Additional validation: only allow safe characters
-    import re
     if not re.match(r'^[a-zA-Z0-9_-]+$', power_type):
-        raise ValueError('Invalid power type %r: must contain only alphanumeric characters, hyphens, and underscores' % power_type)
+        raise ValueError('Invalid power type %r: must be non-empty and contain only alphanumeric characters, hyphens, and underscores' % power_type)
 
-    power_path = '/etc/power-scripts/%s' % power_type
+    power_path = os.path.realpath(f'{POWER_SCRIPT_BASE}/{power_type}')
 
     # Verify the resolved path is within the expected directory
-    real_power_path = os.path.realpath(power_path)
-    real_scripts_dir = os.path.realpath('/etc/power-scripts')
-    if not real_power_path.startswith(real_scripts_dir + os.sep):
+    real_scripts_dir = os.path.realpath(POWER_SCRIPT_BASE)
+    if not power_path.startswith(real_scripts_dir + os.sep):
         raise ValueError('Invalid power type %r: resolved path outside power-scripts directory' % power_type)
 
     if os.path.exists(power_path) and os.access(power_path, os.X_OK):
