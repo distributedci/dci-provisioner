@@ -10,6 +10,7 @@ import time
 from utils import makedirs_ignore
 import json
 import random
+import re
 
 import logging
 
@@ -24,6 +25,7 @@ r = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
 #Replace with a decorator for which methods can be queued...
 actions = ["provision"]
 
+POWER_SCRIPT_BASE = '/etc/power-scripts'
 
 # Validate against actual LABS
 def get_jobs_queue(name: str) -> rq.Queue:
@@ -52,7 +54,19 @@ def fetch_file(url, dest):
                 #file.flush() commented by recommendation from J.F.Sebastian
 
 def find_power_script(power_type):
-    power_path = '/etc/power-scripts/%s' % power_type
+    if not isinstance(power_type, str):
+        raise ValueError('Invalid power type: must be a string')
+
+    if not re.match(r'^[a-zA-Z0-9_-]+$', power_type):
+        raise ValueError('Invalid power type %r: must be non-empty and contain only alphanumeric characters, hyphens, and underscores' % power_type)
+
+    power_path = os.path.realpath(f'{POWER_SCRIPT_BASE}/{power_type}')
+
+    # Verify the resolved path is within the expected directory
+    real_scripts_dir = os.path.realpath(POWER_SCRIPT_BASE)
+    if not power_path.startswith(real_scripts_dir + os.sep):
+        raise ValueError('Invalid power type %r: resolved path outside power-scripts directory' % power_type)
+
     if os.path.exists(power_path) and os.access(power_path, os.X_OK):
         return power_path
     raise ValueError('Invalid power type %r' % power_type)
