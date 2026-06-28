@@ -1,20 +1,8 @@
 import os
 import tempfile
-import errno
 
 def decode_values(redis_values):
     return {k.decode('utf-8'): v.decode('utf-8') for k, v in redis_values.items()}
-
-def makedirs_ignore(path, mode):
-    """
-    Creates the given directory (and any parents), but succeeds if it already
-    exists.
-    """
-    try:
-        os.makedirs(path, mode)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
 
 def extract_arg(arg, kernel_options):
     """
