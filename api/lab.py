@@ -40,6 +40,8 @@ def get_ks_url(hex_ip):
     ks_host = "inst.ks=http://{0}:{1}/kickstarts/{2}".format(settings.LAB_HOST,
                                                              settings.LAB_PORT,
                                                              hex_ip)
+    logger.info("get_ks_url(hex_ip=%s) -> LAB_HOST=%s LAB_PORT=%s -> %s",
+                hex_ip, settings.LAB_HOST, settings.LAB_PORT, ks_host)
     return ks_host
 
 def clear_netboot(netboot, hex_ip, method):
