@@ -7,6 +7,7 @@ import routine
 import socket
 from utils import decode_values
 from rq.job import Job
+from basic_auth import require_basic_auth
 import logging
 
 from logging.config import fileConfig
@@ -23,6 +24,10 @@ def pxe_basename(fqdn):
     ipaddr = socket.gethostbyname(fqdn)
     return '%02X%02X%02X%02X' % tuple(int(octet) for octet in ipaddr.split('.'))
 
+def filter_sensitive_fields(system_data):
+    sensitive_fields = ['bmc_password', 'bmc_user', 'bmc_address', 'bmc_port', 'bmc_type']
+    return {k: v for k, v in system_data.items() if k not in sensitive_fields}
+
 @app.route("/systems", methods=["GET"])
 def systems_list():
     systems = [v.decode('utf-8').replace('system:','',1) for v in r.scan_iter('system:*')]
@@ -30,6 +35,7 @@ def systems_list():
     return flask.jsonify({"systems": systems, "_meta": {"count": nb_systems}})
 
 @app.route("/systems/<fqdn>", methods=["GET"])
+@require_basic_auth
 def system(fqdn):
     k_v = decode_values(r.hgetall("system:%s" % fqdn))
     hex_ip = pxe_basename(fqdn)
@@ -46,12 +52,13 @@ def system(fqdn):
             content_type="application/json",
         )
     else:
-        # Include info about netboot and kickstart settings
-        k_v.update({'netboot': bool(netboot),
-                    'kickstart': bool(kickstart)})
-        return flask.jsonify({fqdn: k_v})
+        safe_k_v = filter_sensitive_fields(k_v)
+        safe_k_v.update({'netboot': bool(netboot),
+                         'kickstart': bool(kickstart)})
+        return flask.jsonify({fqdn: safe_k_v})
 
 @app.route("/systems/<fqdn>", methods=["POST"])
+@require_basic_auth
 def system_create(fqdn):
     k_v = decode_values(r.hgetall("system:%s" % fqdn))
     if len(k_v) == 0:
@@ -80,6 +87,7 @@ def system_create(fqdn):
         )
 
 @app.route("/systems/<fqdn>", methods=["PATCH"])
+@require_basic_auth
 def system_update(fqdn):
     k_v = decode_values(r.hgetall("system:%s" % fqdn))
     if len(k_v) != 0:
@@ -87,7 +95,8 @@ def system_update(fqdn):
         updates = dict(set(k_v.items()) ^ set(values.items()))
         k_v.update(values)
         r.hset("system:%s" % fqdn, mapping=k_v)
-        return flask.jsonify({fqdn: updates})
+        safe_updates = filter_sensitive_fields(updates)
+        return flask.jsonify({fqdn: safe_updates})
     else:
         return flask.Response(
             json.dumps(
@@ -100,6 +109,7 @@ def system_update(fqdn):
         )
 
 @app.route("/systems/<fqdn>/actions", methods=["POST"])
+@require_basic_auth
 def system_actions(fqdn):
     k_v = decode_values(r.hgetall("system:%s" % fqdn))
     if len(k_v) == 0:

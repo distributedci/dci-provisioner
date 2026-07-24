@@ -23,3 +23,9 @@ NETBOOT_TIMEOUT = os.getenv("NETBOOT_TIMEOUT", 10)
 # This is set to dci-provisioner but you will never be able to login
 # unless you change the default kickstart template, since we disable password logins for root
 ROOT_PW = "$6$DCI$vNnnHOqY2pZqc2FF26kEFXrUuTYKNwYk9LhH7aeamcxPBukke1mfldc8bv62AEb/AGREsqXcfdHYVSMOYjEoC0"
+
+# Authentication settings
+# Format: "username:password" or "username:bcrypt_hash"
+# Multiple users: "user1:pass1,user2:pass2"
+# To generate bcrypt hash: python3 -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('yourpassword'))"
+PROVISIONER_AUTH = os.getenv("PROVISIONER_AUTH", "")

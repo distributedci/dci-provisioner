@@ -31,6 +31,43 @@ When a provisioning request is triggered (via the API):
 4.  **Action**: The worker executes the designated Ansible playbooks or generates Kickstart configurations using templates found in `templates/`.
 5.  **Completion**: The worker updates the job status (Success/Failure) and logs the output for review.
 
+## Security & Authentication
+
+The dci-provisioner API implements HTTP Basic Authentication to protect sensitive endpoints. Credentials are automatically generated and configured by `dci-rhel-agent-setup` — no manual setup is required.
+
+### How Credentials Are Managed
+
+When `dci-rhel-agent-setup` runs the `setup_provisioner` role:
+
+1. The `DCI_CLIENT_ID` from `/etc/dci-rhel-agent/dcirc.sh` is used as the username.
+2. A random 32-character password is generated and saved to `/etc/dci-rhel-agent/secrets/provisioner_auth`.
+3. The combined `username:password` string is passed to the provisioner container via the `PROVISIONER_AUTH` environment variable.
+
+On subsequent runs, the existing password is reused. To rotate credentials, delete `/etc/dci-rhel-agent/secrets/provisioner_auth` and re-run `dci-rhel-agent-setup`.
+
+### Protected Endpoints
+
+Authentication is **required** for:
+- `GET /systems/<fqdn>` - Retrieving system details
+- `POST /systems/<fqdn>` - Creating new systems
+- `PATCH /systems/<fqdn>` - Modifying system configurations
+- `POST /systems/<fqdn>/actions` - Triggering provisioning actions
+
+Authentication is **not required** for:
+- `GET /systems` - Listing system names
+- `GET /jobs/<job_key>` - Checking job status
+- `GET /site-map` - Listing available routes
+
+The Ansible playbooks in `dci-rhel-agent` (`add_suts.yml`, `install_suts.yml`, `gather_arches.yml`) automatically include auth headers when calling these endpoints.
+
+### Security Features
+
+- **BMC Credential Filtering**: BMC passwords, usernames, and addresses are filtered from GET responses
+- **Path Traversal Protection**: Input validation prevents malicious file path exploitation
+- **Audit Logging**: All authentication attempts are logged with username and IP address
+
+For complete security documentation, see [SECURITY_FIXES.md](SECURITY_FIXES.md).
+
 ## Repository Structure
 
 * **api/**: Python API source code.
