@@ -38,9 +38,6 @@ def systems_list():
 @require_basic_auth
 def system(fqdn):
     k_v = decode_values(r.hgetall("system:%s" % fqdn))
-    hex_ip = pxe_basename(fqdn)
-    netboot = decode_values(r.hgetall("netboot:%s" % hex_ip))
-    kickstart = json.loads(r.get("kickstart:%s" % hex_ip) or '{}')
     if len(k_v) == 0:
         return flask.Response(
             json.dumps(
@@ -51,11 +48,13 @@ def system(fqdn):
             status=404,
             content_type="application/json",
         )
-    else:
-        safe_k_v = filter_sensitive_fields(k_v)
-        safe_k_v.update({'netboot': bool(netboot),
-                         'kickstart': bool(kickstart)})
-        return flask.jsonify({fqdn: safe_k_v})
+    hex_ip = pxe_basename(fqdn)
+    netboot = decode_values(r.hgetall("netboot:%s" % hex_ip))
+    kickstart = json.loads(r.get("kickstart:%s" % hex_ip) or '{}')
+    safe_k_v = filter_sensitive_fields(k_v)
+    safe_k_v.update({'netboot': bool(netboot),
+                     'kickstart': bool(kickstart)})
+    return flask.jsonify({fqdn: safe_k_v})
 
 @app.route("/systems/<fqdn>", methods=["POST"])
 @require_basic_auth
