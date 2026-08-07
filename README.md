@@ -39,11 +39,11 @@ The dci-provisioner API implements HTTP Basic Authentication to protect sensitiv
 
 When `dci-rhel-agent-setup` runs the `setup_provisioner` role:
 
-1. The `DCI_CLIENT_ID` from `/etc/dci-rhel-agent/dcirc.sh` is used as the username.
-2. A random 32-character password is generated and saved to `/etc/dci-rhel-agent/secrets/provisioner_auth`.
-3. The combined `username:password` string is passed to the provisioner container via the `PROVISIONER_AUTH` environment variable.
+1. The `DCI_CLIENT_ID` from `dcirc.sh` is used as the username.
+2. The `DCI_API_SECRET` from `dcirc.sh` is used as the password.
+3. The password is SHA-256 hashed and combined as `username:hash` in the `PROVISIONER_AUTH` environment variable passed to the provisioner container.
 
-On subsequent runs, the existing password is reused. To rotate credentials, delete `/etc/dci-rhel-agent/secrets/provisioner_auth` and re-run `dci-rhel-agent-setup`.
+No additional credential files are generated — the existing DCI credentials in `dcirc.sh` are reused. The plaintext password is never stored on disk; only the hash is passed to the server.
 
 ### Protected Endpoints
 

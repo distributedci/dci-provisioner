@@ -1,6 +1,7 @@
 import os
 import functools
 import flask
+import hashlib
 import json
 import logging
 
@@ -26,8 +27,8 @@ def verify_credentials(username, password):
     if username not in credentials:
         return False
 
-    stored_password = credentials[username]
-    return stored_password == password
+    stored_hash = credentials[username]
+    return hashlib.sha256(password.encode()).hexdigest() == stored_hash
 
 
 def require_basic_auth(f):
