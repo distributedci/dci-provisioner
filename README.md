@@ -66,8 +66,6 @@ The Ansible playbooks in `dci-rhel-agent` (`add_suts.yml`, `install_suts.yml`, `
 - **Path Traversal Protection**: Input validation prevents malicious file path exploitation
 - **Audit Logging**: All authentication attempts are logged with username and IP address
 
-For complete security documentation, see [SECURITY_FIXES.md](SECURITY_FIXES.md).
-
 ## Repository Structure
 
 * **api/**: Python API source code.

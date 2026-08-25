@@ -1,3 +1,10 @@
+- name: Load provisioner credentials
+  ansible.builtin.set_fact:
+    provisioner_username: "{{ lookup('env', 'DCI_CLIENT_ID') }}"
+    provisioner_password: "{{ lookup('env', 'DCI_API_SECRET') }}"
+  no_log: true
+  delegate_to: localhost
+
 - name: Create Temp DIr
   tempfile:
     state: directory
