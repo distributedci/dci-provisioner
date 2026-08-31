@@ -31,6 +31,41 @@ When a provisioning request is triggered (via the API):
 4.  **Action**: The worker executes the designated Ansible playbooks or generates Kickstart configurations using templates found in `templates/`.
 5.  **Completion**: The worker updates the job status (Success/Failure) and logs the output for review.
 
+## Security & Authentication
+
+The dci-provisioner API implements HTTP Basic Authentication to protect sensitive endpoints. Credentials are automatically generated and configured by `dci-rhel-agent-setup` — no manual setup is required.
+
+### How Credentials Are Managed
+
+When `dci-rhel-agent-setup` runs the `setup_provisioner` role:
+
+1. The `DCI_CLIENT_ID` from `dcirc.sh` is used as the username.
+2. The `DCI_API_SECRET` from `dcirc.sh` is used as the password.
+3. The password is SHA-256 hashed and combined as `username:hash` in the `PROVISIONER_AUTH` environment variable passed to the provisioner container.
+
+No additional credential files are generated — the existing DCI credentials in `dcirc.sh` are reused. The plaintext password is never stored on disk; only the hash is passed to the server.
+
+### Protected Endpoints
+
+Authentication is **required** for:
+- `GET /systems/<fqdn>` - Retrieving system details
+- `POST /systems/<fqdn>` - Creating new systems
+- `PATCH /systems/<fqdn>` - Modifying system configurations
+- `POST /systems/<fqdn>/actions` - Triggering provisioning actions
+
+Authentication is **not required** for:
+- `GET /systems` - Listing system names
+- `GET /jobs/<job_key>` - Checking job status
+- `GET /site-map` - Listing available routes
+
+The Ansible playbooks in `dci-rhel-agent` (`add_suts.yml`, `install_suts.yml`, `gather_arches.yml`) automatically include auth headers when calling these endpoints.
+
+### Security Features
+
+- **BMC Credential Filtering**: BMC passwords, usernames, and addresses are filtered from GET responses
+- **Path Traversal Protection**: Input validation prevents malicious file path exploitation
+- **Audit Logging**: All authentication attempts are logged with username and IP address
+
 ## Repository Structure
 
 * **api/**: Python API source code.

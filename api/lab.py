@@ -8,7 +8,6 @@ import routine
 import socket
 import string
 from utils import decode_values, extract_arg, ip_to_hex
-
 import logging
 
 from logging.config import fileConfig
@@ -43,10 +42,8 @@ def get_ks_url(hex_ip):
     return ks_host
 
 def clear_netboot(netboot, hex_ip, method):
-    """
-    Hosts can either clear netboot when tftp request is made
-    or when the kickstart if pulled.
-    """
+    # Hosts can either clear netboot when tftp request is made
+    # or when the kickstart if pulled.
     hex_ips = [ip_to_hex(ip.split(':')[0]) for ip in flask.request.access_route]
     remote_host_is_calling = hex_ip in hex_ips
     if netboot == method and remote_host_is_calling:

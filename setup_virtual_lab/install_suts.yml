@@ -4,6 +4,13 @@
   gather_facts: False
   strategy: free
   tasks:
+    - name: Load provisioner credentials
+      ansible.builtin.set_fact:
+        provisioner_username: "{{ lookup('env', 'DCI_CLIENT_ID') }}"
+        provisioner_password: "{{ lookup('env', 'DCI_API_SECRET') }}"
+      no_log: true
+      delegate_to: localhost
+
     - name: Record breadcrumb
       ansible.builtin.set_fact:
         breadcrumb: "fedora-42-{{ 999999 | random }}"
@@ -43,6 +50,9 @@
           Accept: application/json
           Content-Type: application/json
         status_code: [201, 409]
+        url_username: "{{ provisioner_username }}"
+        url_password: "{{ provisioner_password }}"
+        force_basic_auth: yes
       changed_when: provision.status == 201
       register: provision
       delegate_to: localhost
@@ -65,6 +75,9 @@
       uri:
         url: "http://localhost:8000/systems/{{ inventory_hostname }}"
         method: GET
+        url_username: "{{ provisioner_username }}"
+        url_password: "{{ provisioner_password }}"
+        force_basic_auth: yes
         status_code:
           - 200
           - 500
@@ -78,6 +91,9 @@
       uri:
         url: "http://localhost:8000/systems/{{ inventory_hostname }}"
         method: GET
+        url_username: "{{ provisioner_username }}"
+        url_password: "{{ provisioner_password }}"
+        force_basic_auth: yes
       until: kickstart.json[inventory_hostname]['kickstart'] | bool is false
       retries: 60 # Retries for 60 * 10 seconds = 600 seconds = 10 minutes
       delay: 10 # Every 10 seconds
